@@ -18,22 +18,16 @@ int main(void) {
     List *head = NULL;
     int i = 0;
 
-    // for (int i = 0; i < 10; i ++) {
-    //     head = push_to_stack(head, i+1);
-    // }
-
+    for (int i = 0; i < 10; i ++) {
+        head = push_to_stack(head, i+1);
+    }
+    head = push_to_stack(head, 7);
     head = push_to_stack(head, 3);
     head = push_to_stack(head, 5);
     head = push_to_stack(head, 2);
     head = push_to_stack(head, 1);
-    head = push_to_stack(head, 7);
 
-    printf("%d ", i);
-    while (i < 5) {
-        printf("%d ", i);
-        bubble_sort(&head);
-        i++;
-    }printf("\n");
+    bubble_sort(&head);
 
     while (head != NULL) {
         printf("%d->", head->data);
@@ -53,7 +47,6 @@ List* push_to_stack(List *head, int num) {
     }
     head = newNode;
 
-    // free(newNode);
     return head;
 }
 
@@ -79,30 +72,34 @@ void reverse_print(List *head) {
 }
 
 void bubble_sort(List **head) {
-    // printf("h..");
     List* cur, *prev, *next;
-    bool swapped = true;
+    bool swapped;
     int i = 0;
-        
-    cur = (*head);
-    prev = NULL;
-    next = cur->next;
-    
-    while (next != NULL) {
-        if (cur->data > next->data) {
-            if (prev == NULL) {
-                (*head)->next = next->next;
-                next->next = (*head);
-                (*head) = next;
+
+    do {  
+        swapped = false;
+        cur = (*head);
+        prev = NULL;
+        next = cur->next;
+
+        while (next != NULL) {
+            if (cur->data > next->data) {
+                if (prev == NULL) {
+                    (*head)->next = next->next;
+                    next->next = (*head);
+                    (*head) = next;
+                }
+                
+                else {
+                    cur->next = next->next;
+                    prev->next = next;
+                    next->next = cur;
+                }
+                swapped = true;
             }
-            else {
-                cur->next = next->next;
-                prev->next = next;
-                next->next = cur;
-            }
-            swapped = true;
-            continue;
+            prev = cur;
+            cur = next;
+            next = next->next;
         }
-            printf("emh..");
-    }
+    } while (swapped);
 }
