@@ -50,19 +50,18 @@ int main(void) {
 
         *pid = fork();
         if (*pid == 0) {
-            printf("Been in child\n");
-
+            parse.args[parse.len] = NULL;
             execvp(parse.args[0], parse.args);
             if (execvp(parse.args[0], parse.args) == -1) {
-                printf("failure to execute");
+                printf("failure to execute\n");
                 exit(0);
             }
             printf("%s %s\n", parse.args[0], parse.args[1]);
         }
         else if (*pid > 0 && (strcmp(parse.args[parse.len-1], "&") != 0)){
-            printf("Been in parent\n");
             wait(pid);
         }
+        else if (strcmp(parse.args[parse.len-1], "&") == 0)
     }
 
     return 0;
