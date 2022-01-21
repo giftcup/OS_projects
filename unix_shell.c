@@ -15,6 +15,7 @@ char *builtin_cmd[] = { "exit",
 
 char* read_cmds(char *buffer);
 Args parse_cmds(Args argument, char *buffer);
+int parsed_output_redirection(char *buffer);
 
 int main(void) {
     Args parse;
@@ -61,7 +62,10 @@ int main(void) {
         else if (*pid > 0 && (strcmp(parse.args[parse.len-1], "&") != 0)){
             wait(pid);
         }
-        else if (strcmp(parse.args[parse.len-1], "&") == 0)
+        else if (strcmp(parse.args[parse.len-1], "&")  == 0 && *pid > 0) {
+            parse.args[parse.len] = NULL;
+            execvp(parse.args[0], parse.args);
+        }
     }
 
     return 0;
@@ -115,4 +119,14 @@ Args parse_cmds(Args parse, char *buffer) {
     parse.len = i;
 
     return parse;
+}
+
+int parsed_output_redirection(char *buffer) {
+    Args parsed_out;
+    int i = 0;
+
+    parsed_out[0] = strtok(buffer, ">");
+    while (parsed_out[i] != NULL) {
+        parsed_out.args = 
+    }
 }
