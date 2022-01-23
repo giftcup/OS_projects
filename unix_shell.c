@@ -88,22 +88,26 @@ int main(void) {
 
 void executeNormally(Args parse) {
     pid_t p1;
+    int ampersand = strcmp(parse.args[parse.len-1], "&");
 
     p1 = fork();
-    if (p1 == 0) {
-        parse.args[parse.len] = NULL;
+
+    if (ampersand == 0) {
+        parse.args[parse.len - 1] = NULL;
         execvp(parse.args[0], parse.args);
-        if (execvp(parse.args[0], parse.args) == -1) {
-            printf("failure to execute\n");
-            exit(0);
+    }
+    else {
+        if (p1 == 0) {
+            parse.args[parse.len] = NULL;
+            execvp(parse.args[0], parse.args);
+            if (execvp(parse.args[0], parse.args) == -1) {
+                printf("failure to execute\n");
+                exit(0);
+            }
         }
-    }
-    else if (p1 > 0 && (strcmp(parse.args[parse.len-1], "&") != 0)){
-        wait(NULL);
-    }
-    else if (strcmp(parse.args[parse.len-1], "&")  == 0 && p1 > 0) {
-        parse.args[parse.len] = NULL;
-        execvp(parse.args[0], parse.args);
+        else if (p1 > 0 && (strcmp(parse.args[parse.len-1], "&") != 0)){
+            wait(NULL);
+        }
     }
 }
 
