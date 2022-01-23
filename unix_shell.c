@@ -39,8 +39,10 @@ int main(void) {
         previous_parse = parse;
         parse = parse_cmds(parse, buffer);
 
-        if (strcmp(parse.args[0], "exit") == 0)
+        if (strcmp(parse.args[0], "exit") == 0) {
             should_run = 0;
+            continue;
+        }
     
         if (strcmp(parse.args[0], "!!") == 0) {
             parse = previous_parse;
@@ -69,7 +71,7 @@ int main(void) {
         else if(input_redirection != 0) {
             if (access(parse.args[input_redirection + 1], F_OK) != 0) 
                 continue;
-            execInputRedirection(parse, output_redirection);
+            execInputRedirection(parse, input_redirection);
             continue;
         }
         else if (piped != 0) {
@@ -143,13 +145,12 @@ void execInputRedirection(Args parse, int redirect_index) {
     int file;
     pid_t pid;
     
-    file = open(parse.args[redirect_index+1], STDIN_FILENO, O_RDONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+    file = open(parse.args[redirect_index+1], O_RDONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
     pid = fork();
 
     if (pid == 0) {
         parse.args[parse.len] = NULL;
         if (file == -1 || parse.args[redirect_index + 1] == NULL) {
-            printf("%d\n", file);
             printf("Invalid command\n");
             exit(1);
         }
@@ -181,14 +182,19 @@ void execPiped(Args parse, int piped) {
 
     afterPipe.args = malloc(sizeof(char) * MAX_CMDS);
 
-    for (i = 0; i < 100; i++) {
+    for (i = 0; ; i++) {
         afterPipe.args[i] = malloc(strlen(parse.args[piped+1+i] + 1) * sizeof(char));
         strcpy(afterPipe.args[i], parse.args[piped+1+i]);
         parse.args[piped+1+i] = NULL;
         afterPipe.len = i+1;
-        if (parse.args[piped+1+i] == NULL) break;
+        // printf("%s %d %d\n", afterPipe.args[i], i, afterPipe.len);
+        // printf("%s %d %d\n", parse.args[i], piped+1+i, parse.len);
+        if (parse.args[piped+i] == NULL) break;
     }
     parse.args[piped] = NULL;
+    // for (int i = 0; i < afterPipe.len; i++) {
+    //             printf("%s \n", afterPipe.args[i]);
+    //         }
 
     if (pipe(pipefd1) == -1) {
         printf("\nPipe failed\n");
@@ -201,12 +207,11 @@ void execPiped(Args parse, int piped) {
         printf("Could not fork\n");
         return;
     }
-    printf("%s\n", parse.args[0]);
+   
     if (p1 == 0) {
         close(pipefd1[0]);
         dup2(pipefd1[1], STDOUT_FILENO);
         close(pipefd1[1]);
-        printf("%s\n", parse.args[0]);
         parse.args[piped-1] = NULL;
         if (execvp(parse.args[0], parse.args) < 0) {
             printf("\nCould not execute command 1..\n");
@@ -214,26 +219,27 @@ void execPiped(Args parse, int piped) {
         }
     }
     else {
+        wait(NULL);
         p2 = fork();
-        // printf("p2\n");
-        if (p1 < 0) {
+
+        if (p2 < 0) {
             printf("Could not fork\n");
             return;
         }
 
         if (p2 == 0) {
-            wait(NULL);
             close (pipefd1[1]);
             dup2 (pipefd1[0], STDIN_FILENO);
             close (pipefd1[0]);
-            printf("%s\n", afterPipe.args[0]);
+
             afterPipe.args[afterPipe.len] = NULL;
-            printf("%s\n", afterPipe.args[0]);
-            execvp(afterPipe.args[0], afterPipe.args);
-           if(execvp(afterPipe.args[0], afterPipe.args) < 0) {
+            // for (int i = 0; i < afterPipe.len; i++) {
+            //     printf("%s \n", afterPipe.args[i]);
+            // }
+            if(execvp(afterPipe.args[0], afterPipe.args) < 0) {
                printf("Could not execute command 2..\n");
                return;
-           }
+            }
         } 
         else {
             wait(NULL);
